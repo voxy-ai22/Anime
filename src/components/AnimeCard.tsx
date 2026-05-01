@@ -22,6 +22,7 @@ export const AnimeCard = ({ anime, onClick }: AnimeCardProps) => {
         <img
           src={anime.image}
           alt={anime.title}
+          referrerPolicy="no-referrer"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
           loading="lazy"
         />

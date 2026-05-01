@@ -4,6 +4,7 @@ export interface AnimeSearchItem {
   image: string;
   status: string | null;
   type: string;
+  desc?: string;
 }
 
 export interface AnimeSearchResponse {
@@ -36,6 +37,7 @@ export interface AnimeDetail {
     Casts: string;
     "Diposting oleh": string;
     "Diperbarui pada": string;
+    [key: string]: string; // Allow flexible keys
   };
   genres: string[];
   sinopsis: string;

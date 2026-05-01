@@ -4,11 +4,13 @@ import { AnimeDetail as AnimeDetailType, AnimeEpisode } from '../types';
 
 interface AnimeDetailProps {
   detail: AnimeDetailType;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
   onClose: () => void;
   onSelectEpisode: (episode: AnimeEpisode) => void;
 }
 
-export const AnimeDetail = ({ detail, onClose, onSelectEpisode }: AnimeDetailProps) => {
+export const AnimeDetail = ({ detail, isFavorite, onToggleFavorite, onClose, onSelectEpisode }: AnimeDetailProps) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -22,19 +24,32 @@ export const AnimeDetail = ({ detail, onClose, onSelectEpisode }: AnimeDetailPro
         exit={{ scale: 0.95, opacity: 0 }}
         className="glass w-full max-w-5xl rounded-xl overflow-hidden relative min-h-[70vh] border-white/10"
       >
-        <button 
-          onClick={onClose}
-          className="absolute top-6 right-6 z-20 glass p-2 rounded-lg hover:bg-[#F27D26] hover:text-black transition-all"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className="absolute top-6 right-6 z-20 flex gap-2">
+          <button 
+            onClick={onToggleFavorite}
+            className={`glass p-2 rounded-lg transition-all ${isFavorite ? 'bg-[#F27D26] text-black shadow-[0_0_20px_rgba(242,125,38,0.4)]' : 'hover:bg-white/10 text-white'}`}
+          >
+            <Star className={`h-5 w-5 ${isFavorite ? 'fill-black' : ''}`} />
+          </button>
+          <button 
+            onClick={onClose}
+            className="glass p-2 rounded-lg hover:bg-red-500 hover:text-white transition-all text-white"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
         <div className="flex flex-col md:flex-row h-full">
           {/* Poster Section */}
           <div className="w-full md:w-80 p-6 md:p-8 shrink-0">
             <div className="sticky top-8">
               <div className="aspect-[3/4] rounded-lg overflow-hidden border border-white/10 shadow-2xl relative group">
-                <img src={detail.image} alt={detail.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                <img 
+                  src={detail.image} 
+                  alt={detail.title} 
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                />
                 <div className="absolute top-2 left-2 bg-[#F27D26] text-black text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">
                   {detail.info.Tipe}
                 </div>

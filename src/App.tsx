@@ -9,7 +9,7 @@ import { Header } from './components/Header';
 import { AnimeCard } from './components/AnimeCard';
 import { AnimeDetail } from './components/AnimeDetail';
 import { AnimePlayer } from './components/AnimePlayer';
-import { animeApi } from './services/api';
+import { animeApi, neoxrApi } from './services/api';
 import { AnimeSearchItem, AnimeDetail as AnimeDetailType, AnimeEpisode } from './types';
 import { Loader2, TrendingUp, Sparkles, AlertCircle } from 'lucide-react';
 
@@ -19,6 +19,22 @@ export default function App() {
   const [selectedDetail, setSelectedDetail] = useState<AnimeDetailType | null>(null);
   const [streamingInfo, setStreamingInfo] = useState<{ url: string; episode: AnimeEpisode } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<AnimeSearchItem[]>(() => {
+    const saved = localStorage.getItem('nx_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [history, setHistory] = useState<AnimeSearchItem[]>(() => {
+    const saved = localStorage.getItem('nx_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('nx_favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('nx_history', JSON.stringify(history));
+  }, [history]);
 
   // Initial load: Search for multiple categories to "load all" as much as possible
   useEffect(() => {
@@ -33,6 +49,7 @@ export default function App() {
       const allResults: AnimeSearchItem[] = [];
       const seenUrls = new Set<string>();
 
+      // Load from NexaNime (FerDev)
       for (const query of queries) {
         const data = await animeApi.search(query);
         if (data.success && data.result) {
@@ -42,15 +59,36 @@ export default function App() {
               allResults.push(item);
             }
           });
-        } else if (!data.success && data.message) {
-          setError(data.message);
-          return;
         }
       }
+
+      // Load from Otakudesu (Neoxr) - Optional fallback/additional data
+      try {
+        const neoxrData = await neoxrApi.search('jujutsu');
+        if (neoxrData.status && neoxrData.data) {
+          neoxrData.data.forEach((item: any) => {
+            // Mapping Neoxr structure to our AnimeSearchItem structure
+            const mappedItem: AnimeSearchItem = {
+              title: item.title,
+              image: item.thumbnail,
+              bookUrl: item.url,
+              status: item.status || 'Otakudesu',
+              type: item.type || 'Anime'
+            };
+            if (!seenUrls.has(mappedItem.bookUrl)) {
+              seenUrls.add(mappedItem.bookUrl);
+              allResults.push(mappedItem);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Neoxr API failed to load during initial fetch', e);
+      }
+
       setResults(allResults);
     } catch (err) {
       console.error(err);
-      setError('Gagal memuat database anime.');
+      setError('Gagal memuat database anime. Periksa API Key di environment.');
     } finally {
       setLoading(false);
     }
@@ -64,11 +102,25 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
+      // Primary search FerDev
       const data = await animeApi.search(query);
-      if (data.success && data.result) {
+      if (data.success && data.result && data.result.length > 0) {
         setResults(data.result);
       } else {
-        setError(data.message || 'Pencarian tidak menemukan hasil.');
+        // Fallback to Neoxr if FerDev is empty
+        const neoxrData = await neoxrApi.search(query);
+        if (neoxrData.status && neoxrData.data && neoxrData.data.length > 0) {
+          const mapped = neoxrData.data.map((item: any) => ({
+            title: item.title,
+            image: item.thumbnail,
+            bookUrl: item.url,
+            status: item.status || 'Otakudesu',
+            type: item.type || 'Anime'
+          }));
+          setResults(mapped);
+        } else {
+          setError('Pencarian tidak menemukan hasil di NexaNime maupun Otakudesu.');
+        }
       }
     } catch (err) {
       setError('Terjadi kesalahan saat mencari.');
@@ -78,12 +130,71 @@ export default function App() {
     }
   };
 
+  const toggleFavorite = (anime: AnimeSearchItem) => {
+    setFavorites(prev => {
+      const exists = prev.find(f => f.bookUrl === anime.bookUrl);
+      if (exists) {
+        return prev.filter(f => f.bookUrl !== anime.bookUrl);
+      }
+      return [anime, ...prev].slice(0, 50); // Limit to 50
+    });
+  };
+
+  const addToHistory = (anime: AnimeSearchItem) => {
+    setHistory(prev => {
+      const filtered = prev.filter(h => h.bookUrl !== anime.bookUrl);
+      return [anime, ...filtered].slice(0, 20); // Limit to 20
+    });
+  };
+
   const handleCardClick = async (anime: AnimeSearchItem) => {
     setLoading(true);
+    addToHistory(anime);
     try {
-      const data = await animeApi.getDetail(anime.bookUrl);
-      if (data.success) {
-        setSelectedDetail(data.result);
+      // Check if it's an Otakudesu URL or FerDev
+      if (anime.bookUrl.includes('otakudesu')) {
+        const data = await neoxrApi.detail(anime.bookUrl);
+        if (data.status && data.data) {
+          // Map Neoxr detail to our Detail Type
+          const item = data.data;
+          const mapped: AnimeDetailType = {
+            success: true,
+            title: item.title,
+            image: item.thumbnail,
+            sinopsis: item.synopsis || 'No description available.',
+            genres: item.genres?.map((g: any) => g.name) || [],
+            rating: item.rating || 0,
+            bookmarkCount: 0,
+            totalEpisodes: item.episodes?.length || 0,
+            url: item.url,
+            info: {
+              Tipe: item.type || 'N/A',
+              Status: item.status || 'N/A',
+              Studio: 'N/A',
+              Dirilis: 'N/A',
+              Durasi: 'N/A',
+              Season: 'N/A',
+              Episode: item.episodes?.length.toString() || '0',
+              Producers: 'N/A',
+              Casts: 'N/A',
+              "Diposting oleh": 'System',
+              "Diperbarui pada": 'Recently',
+              Genre: item.genres?.map((g: any) => g.name).join(', ') || 'N/A'
+            },
+            episodes: item.episodes?.map((ep: any) => ({
+              episode: (ep.title.match(/\d+/) || ['0'])[0],
+              title: ep.title,
+              episodeUrl: ep.url,
+              date: ''
+            })) || []
+          };
+          setSelectedDetail(mapped);
+        }
+      } else {
+        const data = await animeApi.getDetail(anime.bookUrl);
+        if (data.success) {
+          setSelectedDetail(data.result);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -114,7 +225,7 @@ export default function App() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 md:px-8">
         {/* Genre Strip */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 custom-scrollbar no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4 custom-scrollbar no-scrollbar">
           {GENRES.map(genre => (
             <button
               key={genre}
@@ -125,6 +236,53 @@ export default function App() {
             </button>
           ))}
         </div>
+
+        {favorites.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-10 h-10 flex items-center justify-center glass rounded-lg border-[#F27D26]/20">
+                <Sparkles className="h-6 w-6 text-[#F27D26]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-white uppercase">Your Favorites</h2>
+                <p className="text-[10px] text-white/40 font-mono tracking-widest uppercase">Saved collections</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {favorites.map((anime) => (
+                <AnimeCard 
+                  key={`fav-${anime.bookUrl}`} 
+                  anime={anime} 
+                  onClick={handleCardClick} 
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {history.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-10 h-10 flex items-center justify-center glass rounded-lg border-white/10">
+                <Loader2 className="h-6 w-6 text-white/60" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-white uppercase">Recently Viewed</h2>
+                <p className="text-[10px] text-white/40 font-mono tracking-widest uppercase">Continue where you left off</p>
+              </div>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+              {history.map((anime) => (
+                <div key={`hist-${anime.bookUrl}`} className="w-32 flex-shrink-0">
+                  <AnimeCard 
+                    anime={anime} 
+                    onClick={handleCardClick} 
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="mb-12">
           <div className="flex items-center justify-between mb-8">
@@ -182,6 +340,17 @@ export default function App() {
         {selectedDetail && (
           <AnimeDetail 
             detail={selectedDetail} 
+            isFavorite={favorites.some(f => f.bookUrl === selectedDetail.url)}
+            onToggleFavorite={() => {
+              const item: AnimeSearchItem = {
+                title: selectedDetail.title,
+                image: selectedDetail.image,
+                bookUrl: selectedDetail.url,
+                status: selectedDetail.info.Status,
+                type: selectedDetail.info.Tipe
+              };
+              toggleFavorite(item);
+            }}
             onClose={() => setSelectedDetail(null)} 
             onSelectEpisode={handleSelectEpisode}
           />

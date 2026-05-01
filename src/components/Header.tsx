@@ -23,8 +23,8 @@ export const Header = ({ onSearch }: HeaderProps) => {
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => window.location.reload()}
         >
-          <div className="w-10 h-10 bg-[#F27D26] rounded-lg flex items-center justify-center font-bold text-black accent-glow ring-1 ring-white/20">
-            NX
+          <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center accent-glow ring-1 ring-white/20">
+            <img src="https://c.termai.cc/i109/WrU.jpg" alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-white uppercase">
             Nexa<span className="text-[#F27D26]">Nime</span>
@@ -46,7 +46,14 @@ export const Header = ({ onSearch }: HeaderProps) => {
           <a href="#" className="text-[#F27D26] hover:text-white transition-colors">Popular</a>
           <a href="#" className="text-white/60 hover:text-white transition-colors">Schedule</a>
           <a href="#" className="text-white/60 hover:text-white transition-colors">Genres</a>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#F27D26] to-red-500 border border-white/20 accent-glow"></div>
+          <div className="w-8 h-8 rounded-full border border-white/20 accent-glow overflow-hidden">
+            <img 
+              src="https://c.termai.cc/i109/WrU.jpg" 
+              alt="Avatar" 
+              className="w-full h-full object-cover" 
+              referrerPolicy="no-referrer"
+            />
+          </div>
         </div>
       </div>
     </header>

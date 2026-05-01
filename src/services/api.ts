@@ -17,11 +17,20 @@ export const animeApi = {
     
     // Attempt to normalize or "convert" stream URL if it's a known embed platform
     if (data.success && data.data && data.data.streamUrl) {
-      // If it's a blogger video, we often can't convert to MP4 client-side without a proxy,
-      // but we can ensure the iframe is treated as a clean video source.
       console.log("Original Stream URL:", data.data.streamUrl);
     }
     
     return data;
+  }
+};
+
+export const neoxrApi = {
+  search: async (query: string) => {
+    const response = await fetch(`/api/neoxr/search?q=${encodeURIComponent(query)}`);
+    return response.json();
+  },
+  detail: async (url: string) => {
+    const response = await fetch(`/api/neoxr/get?url=${encodeURIComponent(url)}`);
+    return response.json();
   }
 };
