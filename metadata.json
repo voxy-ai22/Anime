@@ -1,0 +1,6 @@
+{
+  "name": "AniGloos",
+  "description": "Platform streaming anime modern dengan desain Glassmorphism dan performa tinggi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["Anime Search", "Anime Streaming", "Anime Details"]
+}

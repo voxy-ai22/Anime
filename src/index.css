@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-glass-surface: rgba(255, 255, 255, 0.07);
+  --color-glass-border: rgba(255, 255, 255, 0.15);
+  --color-accent: #F27D26;
+  --radius-glass: 12px;
+}
+
+@layer base {
+  body {
+    background: radial-gradient(circle at 10% 10%, #1a1c2c 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, #2a1b14 0%, transparent 40%),
+                #05070A;
+    @apply text-[#E0E0E0] overflow-x-hidden min-h-screen font-sans;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--color-glass-surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--color-glass-border);
+  }
+  
+  .glass-card {
+    background: var(--color-glass-surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--color-glass-border);
+    border-radius: var(--radius-glass);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(242, 125, 38, 0.3);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 15px rgba(242, 125, 38, 0.4);
+  }
+
+  .accent-glow {
+    box-shadow: 0 0 20px rgba(242, 125, 38, 0.4);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-glass-border);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+  }
+}
