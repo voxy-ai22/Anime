@@ -13,79 +13,82 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  const API_KEY = process.env.VITE_ANIME_API_KEY;
-  const NEOXR_KEY = process.env.VITE_NEOXR_API_KEY;
+  const API_KEY = process.env.ANIME_API_KEY || process.env.VITE_ANIME_API_KEY;
+  const NEOXR_KEY = process.env.NEOXR_API_KEY || process.env.VITE_NEOXR_API_KEY;
+  
   const EXTERNAL_BASE_URL = 'https://api.ferdev.my.id/internet/animekuindo';
   const NEOXR_BASE_URL = 'https://api.neoxr.eu/api';
 
   // API Proxy Routes (FerDev)
   app.get('/api/anime/search', async (req, res) => {
-    if (!API_KEY) {
-      return res.status(500).json({ success: false, message: 'VITE_ANIME_API_KEY missing' });
-    }
     try {
       const { query } = req.query;
       const response = await fetch(`${EXTERNAL_BASE_URL}/search?query=${encodeURIComponent(query as string)}&apikey=${API_KEY}`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
+      console.error('FerDev Search Error:', error);
       res.status(500).json({ success: false, message: 'Server proxy error' });
     }
   });
 
   // API Proxy Routes (Neoxr Otakudesu)
   app.get('/api/neoxr/search', async (req, res) => {
-    if (!NEOXR_KEY) {
-      return res.status(500).json({ success: false, message: 'VITE_NEOXR_API_KEY missing' });
-    }
     try {
       const { q } = req.query;
       const response = await fetch(`${NEOXR_BASE_URL}/otakudesu?q=${encodeURIComponent(q as string)}&apikey=${NEOXR_KEY}`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
+      console.error('Neoxr Search Error:', error);
       res.status(500).json({ success: false, message: 'Neoxr proxy error' });
     }
   });
 
   app.get('/api/neoxr/get', async (req, res) => {
-    if (!NEOXR_KEY) {
-      return res.status(500).json({ success: false, message: 'VITE_NEOXR_API_KEY missing' });
-    }
     try {
       const { url } = req.query;
       const response = await fetch(`${NEOXR_BASE_URL}/otakudesu-get?url=${encodeURIComponent(url as string)}&apikey=${NEOXR_KEY}`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
+      console.error('Neoxr Detail Error:', error);
+      res.status(500).json({ success: false, message: 'Neoxr proxy error' });
+    }
+  });
+
+  app.get('/api/neoxr/stream', async (req, res) => {
+    try {
+      const { url } = req.query;
+      const response = await fetch(`${NEOXR_BASE_URL}/otakudesu-stream?url=${encodeURIComponent(url as string)}&apikey=${NEOXR_KEY}`);
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error('Neoxr Stream Error:', error);
       res.status(500).json({ success: false, message: 'Neoxr proxy error' });
     }
   });
 
   app.get('/api/anime/detail', async (req, res) => {
-    if (!API_KEY) {
-      return res.status(500).json({ success: false, message: 'VITE_ANIME_API_KEY missing' });
-    }
     try {
       const { bookUrl } = req.query;
       const response = await fetch(`${EXTERNAL_BASE_URL}/detail?bookUrl=${encodeURIComponent(bookUrl as string)}&apikey=${API_KEY}`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
+      console.error('FerDev Detail Error:', error);
       res.status(500).json({ success: false, message: 'Server proxy error' });
     }
   });
 
   app.get('/api/anime/stream', async (req, res) => {
-    if (!API_KEY) {
-      return res.status(500).json({ success: false, message: 'VITE_ANIME_API_KEY missing' });
-    }
     try {
       const { episodeUrl } = req.query;
       const response = await fetch(`${EXTERNAL_BASE_URL}/stream?episodeUrl=${encodeURIComponent(episodeUrl as string)}&apikey=${API_KEY}`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
+      console.error('FerDev Stream Error:', error);
       res.status(500).json({ success: false, message: 'Server proxy error' });
     }
   });

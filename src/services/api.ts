@@ -32,5 +32,9 @@ export const neoxrApi = {
   detail: async (url: string) => {
     const response = await fetch(`/api/neoxr/get?url=${encodeURIComponent(url)}`);
     return response.json();
+  },
+  stream: async (url: string) => {
+    const response = await fetch(`/api/neoxr/stream?url=${encodeURIComponent(url)}`);
+    return response.json();
   }
 };
