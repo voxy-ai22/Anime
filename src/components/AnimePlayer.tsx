@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { X, Maximize2, ShieldCheck, Info } from 'lucide-react';
+import { X, Maximize2, ShieldCheck, Info, Play } from 'lucide-react';
 import { AnimeEpisode } from '../types';
 
 interface AnimePlayerProps {
@@ -38,13 +38,23 @@ export const AnimePlayer = ({ streamUrl, episode, onClose }: AnimePlayerProps) =
           </button>
         </div>
 
-        <div className="relative aspect-video glass rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-          <iframe
-            src={streamUrl}
-            className="absolute inset-0 w-full h-full"
-            allowFullScreen
-            scrolling="no"
-          />
+        <div className="relative aspect-video glass rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+          {streamUrl.includes('.mp4') || streamUrl.includes('.m3u8') ? (
+            <video
+              src={streamUrl}
+              controls
+              autoPlay
+              className="absolute inset-0 w-full h-full"
+            />
+          ) : (
+            <iframe
+              src={streamUrl}
+              className="absolute inset-0 w-full h-full"
+              allowFullScreen
+              scrolling="no"
+              allow="autoplay; encrypted-media"
+            />
+          )}
         </div>
 
         <div className="flex items-center justify-between px-4">

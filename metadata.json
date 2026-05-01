@@ -1,6 +1,6 @@
 {
-  "name": "AniGloos",
-  "description": "Platform streaming anime modern dengan desain Glassmorphism dan performa tinggi.",
+  "name": "NexaNime",
+  "description": "Premium anime streaming platform with high-performance glassmorphism design.",
   "requestFramePermissions": [],
   "majorCapabilities": ["Anime Search", "Anime Streaming", "Anime Details"]
 }

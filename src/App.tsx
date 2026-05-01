@@ -20,23 +20,58 @@ export default function App() {
   const [streamingInfo, setStreamingInfo] = useState<{ url: string; episode: AnimeEpisode } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Initial load: Search for "populer" as suggested in user request
+  // Initial load: Search for multiple categories to "load all" as much as possible
   useEffect(() => {
-    handleSearch('populer');
+    fetchAllAnime();
   }, []);
 
+  const fetchAllAnime = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const queries = ['populer', 'terbaru', 'drama', 'action'];
+      const allResults: AnimeSearchItem[] = [];
+      const seenUrls = new Set<string>();
+
+      for (const query of queries) {
+        const data = await animeApi.search(query);
+        if (data.success && data.result) {
+          data.result.forEach(item => {
+            if (!seenUrls.has(item.bookUrl)) {
+              seenUrls.add(item.bookUrl);
+              allResults.push(item);
+            }
+          });
+        } else if (!data.success && data.message) {
+          setError(data.message);
+          return;
+        }
+      }
+      setResults(allResults);
+    } catch (err) {
+      console.error(err);
+      setError('Gagal memuat database anime.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      fetchAllAnime();
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const data = await animeApi.search(query);
-      if (data.success) {
+      if (data.success && data.result) {
         setResults(data.result);
       } else {
-        setError('Gagal memuat data anime.');
+        setError(data.message || 'Pencarian tidak menemukan hasil.');
       }
     } catch (err) {
-      setError('Terjadi kesalahan jaringan.');
+      setError('Terjadi kesalahan saat mencari.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -71,11 +106,26 @@ export default function App() {
     }
   };
 
+  const GENRES = ['Action', 'Comedy', 'Romance', 'School', 'Harem', 'Drama', 'Fantasy', 'Horror', 'Mystery'];
+
   return (
     <div className="relative z-10">
       <Header onSearch={handleSearch} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 md:px-8">
+        {/* Genre Strip */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 custom-scrollbar no-scrollbar">
+          {GENRES.map(genre => (
+            <button
+              key={genre}
+              onClick={() => handleSearch(genre)}
+              className="whitespace-nowrap px-4 py-2 glass-card text-[10px] uppercase font-bold tracking-widest hover:bg-[#F27D26] hover:text-black transition-all"
+            >
+              {genre}
+            </button>
+          ))}
+        </div>
+
         <section className="mb-12">
           <div className="flex items-center justify-between mb-8">
              <div className="flex items-center gap-4">

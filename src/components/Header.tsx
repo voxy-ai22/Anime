@@ -24,10 +24,10 @@ export const Header = ({ onSearch }: HeaderProps) => {
           onClick={() => window.location.reload()}
         >
           <div className="w-10 h-10 bg-[#F27D26] rounded-lg flex items-center justify-center font-bold text-black accent-glow ring-1 ring-white/20">
-            AK
+            NX
           </div>
           <h1 className="text-xl font-bold tracking-tight text-white uppercase">
-            AnimeKu<span className="text-[#F27D26]">.indo</span>
+            Nexa<span className="text-[#F27D26]">Nime</span>
           </h1>
         </motion.div>
 

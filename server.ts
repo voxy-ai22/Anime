@@ -1,0 +1,82 @@
+import express from 'express';
+import { createServer as createViteServer } from 'vite';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  const API_KEY = process.env.VITE_ANIME_API_KEY;
+  const EXTERNAL_BASE_URL = 'https://api.ferdev.my.id/internet/animekuindo';
+
+  // API Proxy Routes
+  app.get('/api/anime/search', async (req, res) => {
+    if (!API_KEY) {
+      return res.status(500).json({ success: false, message: 'Server Configuration Error: VITE_ANIME_API_KEY is missing' });
+    }
+    try {
+      const { query } = req.query;
+      const response = await fetch(`${EXTERNAL_BASE_URL}/search?query=${encodeURIComponent(query as string)}&apikey=${API_KEY}`);
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server proxy error' });
+    }
+  });
+
+  app.get('/api/anime/detail', async (req, res) => {
+    if (!API_KEY) {
+      return res.status(500).json({ success: false, message: 'Server Configuration Error: VITE_ANIME_API_KEY is missing' });
+    }
+    try {
+      const { bookUrl } = req.query;
+      const response = await fetch(`${EXTERNAL_BASE_URL}/detail?bookUrl=${encodeURIComponent(bookUrl as string)}&apikey=${API_KEY}`);
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server proxy error' });
+    }
+  });
+
+  app.get('/api/anime/stream', async (req, res) => {
+    if (!API_KEY) {
+      return res.status(500).json({ success: false, message: 'Server Configuration Error: VITE_ANIME_API_KEY is missing' });
+    }
+    try {
+      const { episodeUrl } = req.query;
+      const response = await fetch(`${EXTERNAL_BASE_URL}/stream?episodeUrl=${encodeURIComponent(episodeUrl as string)}&apikey=${API_KEY}`);
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server proxy error' });
+    }
+  });
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();
